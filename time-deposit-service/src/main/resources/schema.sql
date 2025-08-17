@@ -1,5 +1,4 @@
--- 旧: CREATE TYPE IF NOT EXISTS deposit_status AS ENUM ('OPEN', 'CLOSED');
-
+-- 既存の CREATE TABLE を以下のように更新
 CREATE TABLE IF NOT EXISTS time_deposits (
   id UUID PRIMARY KEY,
   owner TEXT NOT NULL,
@@ -8,7 +7,9 @@ CREATE TABLE IF NOT EXISTS time_deposits (
   term_days INT NOT NULL,
   start_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   maturity_at TIMESTAMPTZ NOT NULL,
-  -- 旧: status deposit_status NOT NULL DEFAULT 'OPEN'
   status TEXT NOT NULL DEFAULT 'OPEN',
-  CONSTRAINT time_deposits_status_chk CHECK (status IN ('OPEN','CLOSED'))
+  payout_amount NUMERIC(19,2),
+  payout_account UUID,
+  closed_at TIMESTAMPTZ,
+  CONSTRAINT time_deposits_status_chk CHECK (status IN ('OPEN','CLOSING','CLOSED'))
 );

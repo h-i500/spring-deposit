@@ -1,7 +1,12 @@
 package com.example.timedeposit.service;
 
+import com.example.timedeposit.api.TransferRequest;          // あれば
+import com.example.timedeposit.client.SavingsClient;          // ← これが正
 import com.example.timedeposit.model.TimeDeposit;
 import com.example.timedeposit.repository.TimeDepositRepository;
+
+// import main.java.com.example.timedeposit.client.SavingsClient;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,5 +55,37 @@ public class TimeDepositService {
         BigDecimal payout = calculatePayout(td);
         td.setStatus(TimeDeposit.Status.CLOSED);
         return payout;
+    }
+
+    @Transactional
+    public BigDecimal closeAndTransfer(UUID id, UUID toAccountId, Instant now, SavingsClient savingsClient) {
+    TimeDeposit td = get(id);
+
+    if (td.getStatus() == TimeDeposit.Status.CLOSED) {
+        // 冪等：既に閉鎖済みなら記録値を返す
+        return td.getPayoutAmount();
+    }
+
+    if (now.isBefore(td.getMaturityAt())) {
+        throw new IllegalStateException("not matured yet");
+    }
+
+    // まず CLOSING にして同時実行をブロック（この変更はトランザクション内で確定）
+    td.setStatus(TimeDeposit.Status.CLOSING);
+
+    // 払戻額を計算
+    BigDecimal payout = calculatePayout(td);
+
+    // 外部呼び出し：Savings に入金（ネットワークなのでトランザクション外部）
+    // 失敗したら例外となり、このトランザクションはロールバック → 状態は OPEN のままに戻る
+    savingsClient.deposit(toAccountId, payout);
+
+    // 入金成功 → 閉鎖確定
+    td.setStatus(TimeDeposit.Status.CLOSED);
+    td.setPayoutAmount(payout);
+    td.setPayoutAccount(toAccountId);
+    td.setClosedAt(now);
+
+    return payout;
     }
 }

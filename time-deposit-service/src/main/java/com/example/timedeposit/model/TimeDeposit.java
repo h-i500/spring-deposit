@@ -9,7 +9,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "time_deposits")
 public class TimeDeposit {
-    public enum Status { OPEN, CLOSED }
+    // public enum Status { OPEN, CLOSED }
+    public enum Status { OPEN, CLOSING, CLOSED }  // ← CLOSING を追加
 
     @Id
     private UUID id;
@@ -31,6 +32,16 @@ public class TimeDeposit {
 
     @Column(name = "maturity_at", nullable = false)
     private Instant maturityAt;
+
+    // 既存フィールドに加えて
+    @Column(name = "payout_amount", precision = 19, scale = 2)
+    private BigDecimal payoutAmount;
+
+    @Column(name = "payout_account")
+    private UUID payoutAccount;
+
+    @Column(name = "closed_at")
+    private Instant closedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -59,4 +70,14 @@ public class TimeDeposit {
     public void setStartAt(Instant startAt) { this.startAt = startAt; }
     public void setMaturityAt(Instant maturityAt) { this.maturityAt = maturityAt; }
     public void setStatus(Status status) { this.status = status; }
+
+    // getter/setter も追加
+    public BigDecimal getPayoutAmount() { return payoutAmount; }
+    public void setPayoutAmount(BigDecimal v) { this.payoutAmount = v; }
+
+    public UUID getPayoutAccount() { return payoutAccount; }
+    public void setPayoutAccount(UUID v) { this.payoutAccount = v; }
+
+    public Instant getClosedAt() { return closedAt; }
+    public void setClosedAt(Instant v) { this.closedAt = v; }
 }

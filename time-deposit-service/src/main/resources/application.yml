@@ -13,3 +13,6 @@ spring:
   sql:
     init:
       mode: always
+
+savings:
+  base-url: ${SAVINGS_BASE_URL:http://savings-service:8080}
