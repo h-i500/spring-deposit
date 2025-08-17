@@ -1,0 +1,57 @@
+
+services:
+  savings-db:
+    image: postgres:16
+    container_name: savings-db
+    environment:
+      POSTGRES_DB: savings
+      POSTGRES_USER: savings
+      POSTGRES_PASSWORD: savings
+    ports:
+      - "5433:5432"  # 任意（ホストから直接叩く場合）
+    volumes:
+      - savings-data:/var/lib/postgresql/data
+
+  savings-service:
+    build: ./savings-service
+    container_name: savings-service
+    environment:
+      DB_HOST: savings-db
+      DB_PORT: 5432
+      DB_NAME: savings
+      DB_USER: savings
+      DB_PASSWORD: savings
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - savings-db
+    ports:
+      - "8081:8080"
+
+  timedeposit-db:
+    image: postgres:16
+    container_name: timedeposit-db
+    environment:
+      POSTGRES_DB: timedeposit
+      POSTGRES_USER: timedeposit
+      POSTGRES_PASSWORD: timedeposit
+    volumes:
+      - timedeposit-data:/var/lib/postgresql/data
+
+  time-deposit-service:
+    build: ./time-deposit-service
+    container_name: time-deposit-service
+    environment:
+      DB_HOST: timedeposit-db
+      DB_PORT: 5432
+      DB_NAME: timedeposit
+      DB_USER: timedeposit
+      DB_PASSWORD: timedeposit
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - timedeposit-db
+    ports:
+      - "8082:8080"
+
+volumes:
+  savings-data:
+  timedeposit-data:
